@@ -68,11 +68,13 @@ Since the `tektoncd/pipelines` run reconciler internally resolves the before/aft
 In order to extend `PipelineResources`, in whatever manifestation, it would be sensible that users would create a controller that would reconciler _something_ to this end. 
 With this assumption, why not do the same natively?
 For each type of `PipelineResource`, have an informer/reconciler on CUD (Create|Update|Delete) operations.
+
 In order to detect this new `PipelineResource`, some labels could be applied to some resource kind that would indicate it as a `PipelineResource` as well as its `PipelineResource` kind.
 For example, `PipelineResources` could be modeled as `ConfigMaps`; they are supported natively and have a dictionary/map in them.
 This would make allow for `Kustomize` or other such tools to create `"PipelineResources"` since they are core k8s objects.
 As a slight con, `ConfigMaps` are their own type, so the aforementioned reconciler would be called for any `ConfigMap` CUD operation.
 Alternatively, this could be accomplished with some new standardized `PipelineResource` object (likely with a map as well), where the informer would reconcile based on only a type label/field.
+
 With either object, another issue is how to forward information to the Run object since their form is unknown to the Run reconciler.
 One way would be to have an owner reference on `PipelineResources` where each kind of `PipelineResource` reconciler is responsible for updating some correlated status on the Run object parent; once all of these statuses are ready, the Run object would start.
 Since updating the status calls the reconciler again, this is probably less than ideal (racing between reconcilers).
@@ -83,7 +85,7 @@ This is mostly a rewording of that within the [extensibility doc](https://docs.g
 ## Idea 2: Surface PipelineResources as Declarative Mounts
 Currently, `PipelineResources` resolve their behavior first party by [checking against some predetermined list of `PipelineResources`](https://github.com/tektoncd/pipeline/blob/master/pkg/apis/pipeline/v1alpha1/resource_types.go#L138) to determine what steps to add to the Run object.
 It seems like Run objects could provide a preMount (and likely postMount) field that would take some image that would act as the declarative mounting functionality analogous to what `PipelineResources` do currently.
+
 In this way, the same images being used for `PipelineResources` would be used as mount images.
-As a result, Runs would be able to start immediately because their execution would be well defined.
-Further, the only resources that would need to be garbage collected are the Runs objects themselves.
+As a result, Runs would have nothing but parameters so that the only resources that would need to be garbage collected are the Runs objects themselves.
 
