@@ -3,5 +3,5 @@ Random collection of stuff
 
 
 ```yaml
-hello: world
+hello: "world**something**"
 ```
